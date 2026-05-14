@@ -21,8 +21,32 @@ class SalaryDataPoint(BaseModel):
     category: str
     mean_salary: float
 
+class StatisticSummary(BaseModel):
+    average_salary: float
+    highest_salary: float
+    lowest_salary: float
+    total_records: int
+
+class CountryCount(BaseModel):
+    category: str
+    count: int
+
+class ExperiencePoint(BaseModel):
+    experience: int
+    mean_salary: float
+
+class EducationSalaryByCountry(BaseModel):
+    country: str
+    education: str
+    mean_salary: float
+
 class AnalyticsResponse(BaseModel):
+    summary_stats: StatisticSummary
     mean_salary_by_country: List[SalaryDataPoint]
     mean_salary_by_experience: List[SalaryDataPoint]
+    experience_salary_points: List[ExperiencePoint]
     salary_distribution: List[dict]   # for histogram
     education_salary_comparison: List[dict]
+    education_salary_distribution: List[dict]
+    country_distribution: List[CountryCount]
+    education_salary_by_country: List[EducationSalaryByCountry]

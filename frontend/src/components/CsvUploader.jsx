@@ -1,4 +1,5 @@
-﻿import { useState, useRef, useEffect } from 'react';
+﻿// CsvUploader.jsx
+import { useState, useRef, useEffect } from 'react';
 import { uploadCSV, convertSalary, getSupportedCurrencies } from '../services/api';
 import toast from 'react-hot-toast';
 
@@ -199,54 +200,174 @@ export default function CsvUploader() {
     fetchCurrencies();
   }, []);
 
-  const displayedResults = convertedResults || result?.results || [];
   const canConvert = result?.results?.length > 0;
 
   return (
-    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-      <h3 className="text-lg font-semibold text-gray-800 mb-3">Batch Predictions (CSV)</h3>
-      <p className="text-sm text-gray-600 mb-3">
-        Upload a CSV with columns: <code className="bg-gray-100 px-1">Country, EdLevel, YearsCodePro</code>
-      </p>
-      <div className="flex flex-col sm:flex-row gap-3 mb-4">
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".csv"
-          onChange={handleFileChange}
-          className="text-gray-700"
-        />
-        <button
-          onClick={downloadSampleCSV}
-          className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg transition"
-        >
-          Download Sample CSV
-        </button>
-        <button
-          onClick={handleUpload}
-          disabled={uploading}
-          className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg disabled:opacity-50"
-        >
-          {uploading ? 'Processing...' : 'Upload & Predict'}
-        </button>
-      </div>
-      <p className="text-sm text-blue-600 mb-4">
-        Tip: if upload fails, close the CSV file and select it again. This note is a precaution, not an active error.
-      </p>
+    <div className="space-y-6">
+      {/* Upload Section */}
+      <div className="bg-white rounded-2xl shadow-md border border-slate-100 p-6 transition-shadow hover:shadow-lg">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7C5 4 4 5 4 7z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h8M12 8v8" />
+            </svg>
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-slate-800">Batch Predictions (CSV)</h3>
+            <p className="text-sm text-slate-500">
+              Upload a CSV with columns: <code className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">Country, EdLevel, YearsCodePro</code>
+            </p>
+          </div>
+        </div>
 
+        <div className="flex flex-wrap gap-3 mb-4">
+          <label className="cursor-pointer bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl px-4 py-2 transition flex items-center gap-2">
+            <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            <span className="text-sm font-medium text-slate-700">Choose CSV file</span>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+          </label>
+          <button
+            onClick={downloadSampleCSV}
+            className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-4 py-2 rounded-xl transition flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Download Sample CSV
+          </button>
+          <button
+            onClick={handleUpload}
+            disabled={uploading}
+            className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold px-6 py-2 rounded-xl transition disabled:opacity-50 flex items-center gap-2"
+          >
+            {uploading ? (
+              <>
+                <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Processing...
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                Upload & Predict
+              </>
+            )}
+          </button>
+        </div>
+
+        <div className="mt-3 text-sm text-sky-600 bg-sky-50 border border-sky-100 rounded-xl p-3 flex items-start gap-2">
+          <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span className="text-sm">Tip: If upload fails, close the CSV file and select it again. Ensure correct column headers.</span>
+        </div>
+      </div>
+
+      {/* Results Section */}
       {result && (
-        <>
-          <div className="mb-4 rounded-xl bg-gray-50 border border-gray-200 p-4">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-6">
+          {/* Original Predictions */}
+          <div className="bg-white rounded-2xl shadow-md border border-slate-100 p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
               <div>
-                <p className="text-sm text-gray-700">Batch conversion target currency</p>
+                <h4 className="text-lg font-bold text-slate-800">Original Predicted Salaries (USD)</h4>
+                <p className="text-sm text-slate-500">The original predictions below in USD. Use the converter to see salaries in different currencies.</p>
+              </div>
+            </div>
+
+            <div className="text-sm text-slate-600 mb-4 flex flex-wrap gap-3">
+              <span className="bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full">
+                ✅ Successful: {result.successful_predictions} / {result.total_rows}
+              </span>
+              {result.rows_dropped_due_to_education > 0 && (
+                <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full">
+                  ⚠️ {result.rows_dropped_due_to_education} rows dropped (unrecognized education)
+                </span>
+              )}
+            </div>
+
+            {result.errors.length > 0 && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
+                <p className="text-sm font-semibold text-red-800 mb-2">Errors</p>
+                <ul className="text-sm text-red-700 list-disc list-inside max-h-32 overflow-y-auto">
+                  {result.errors.slice(0, 5).map((err, i) => (
+                    <li key={i}>Row {err.row}: {err.country} - {err.error}</li>
+                  ))}
+                  {result.errors.length > 5 && <li>... and {result.errors.length - 5} more</li>}
+                </ul>
+              </div>
+            )}
+
+            <div className="overflow-auto max-h-96 border border-slate-200 rounded-xl">
+              <table className="min-w-full text-sm text-slate-700">
+                <thead className="bg-slate-50 sticky top-0">
+                  <tr>
+                    <th className="p-3 text-left font-semibold">Country</th>
+                    <th className="p-3 text-left font-semibold">Education</th>
+                    <th className="p-3 text-left font-semibold">Experience</th>
+                    <th className="p-3 text-left font-semibold">Predicted Salary (USD)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {result?.results?.map((row, i) => (
+                    <tr key={i} className="border-t border-slate-100 hover:bg-slate-50">
+                      <td className="p-3">{row.Country}</td>
+                      <td className="p-3">{row.EdLevel}</td>
+                      <td className="p-3">{row.YearsCodePro}</td>
+                      <td className="p-3 font-mono">
+                        {typeof row.Predicted_Salary_USD === 'number'
+                          ? `$${row.Predicted_Salary_USD.toLocaleString()}`
+                          : '❌ Error'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Currency Conversion Section */}
+          <div className="bg-white rounded-2xl shadow-md border border-slate-100 p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-8 h-8 rounded-lg bg-green-100 text-green-600 flex items-center justify-center">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <h4 className="text-lg font-bold text-slate-800">Convert to Another Currency</h4>
+                <p className="text-sm text-slate-500">Convert all predictions to your preferred currency using real‑time exchange rates.</p>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-slate-700 mb-1">Target currency</label>
                 <select
                   value={targetCurrency}
                   onChange={(e) => {
                     setTargetCurrency(e.target.value);
                     setConvertedResults(null);
                   }}
-                  className="mt-2 w-full sm:w-64 bg-white border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full sm:w-64 bg-white border border-slate-300 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 >
                   {Object.entries(supportedCurrencies).map(([code, name]) => (
                     <option key={code} value={code}>
@@ -259,76 +380,86 @@ export default function CsvUploader() {
                 <button
                   onClick={handleBatchConvert}
                   disabled={conversionLoading || !canConvert}
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg disabled:opacity-50"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-5 py-2 rounded-xl transition disabled:opacity-50 flex items-center gap-2"
                 >
-                  {conversionLoading ? 'Converting...' : 'Convert Batch'}
+                  {conversionLoading ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                      </svg>
+                      Converting...
+                    </>
+                  ) : (
+                    'Convert Batch'
+                  )}
                 </button>
                 <button
                   onClick={() => setConvertedResults(null)}
                   disabled={!convertedResults}
-                  className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg disabled:opacity-50"
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-5 py-2 rounded-xl transition disabled:opacity-50"
                 >
-                  Reset Conversion
+                  Reset
                 </button>
               </div>
             </div>
-            {conversionError && <p className="text-sm text-red-600 mt-3">{conversionError}</p>}
-          </div>
-
-          <div className="mt-4">
-            <div className="text-sm text-gray-600 mb-2">
-              ✅ Successful: {result.successful_predictions} / {result.total_rows}
-              {result.rows_dropped_due_to_education > 0 && (
-                <span className="ml-2 text-yellow-600">
-                  (⚠️ {result.rows_dropped_due_to_education} rows dropped due to unrecognized education)
-                </span>
-              )}
-            </div>
-            {result.errors.length > 0 && (
-              <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">
-                <strong>Errors:</strong>
-                <ul className="list-disc list-inside">
-                  {result.errors.slice(0, 5).map((err, i) => (
-                    <li key={i}>Row {err.row}: {err.country} - {err.error}</li>
-                  ))}
-                  {result.errors.length > 5 && <li>... and {result.errors.length - 5} more</li>}
-                </ul>
+            {conversionError && (
+              <div className="mt-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl p-3">
+                {conversionError}
               </div>
             )}
-            <div className="overflow-auto max-h-96 border border-gray-200 rounded-lg">
-              <table className="min-w-full text-sm text-gray-700">
-                <thead className="bg-gray-100 sticky top-0">
-                  <tr>
-                    <th className="p-2 text-left">Country</th>
-                    <th className="p-2 text-left">Education</th>
-                    <th className="p-2 text-left">Experience</th>
-                    <th className="p-2 text-left">Predicted Salary (USD)</th>
-                    <th className="p-2 text-left">Converted Salary ({targetCurrency})</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {displayedResults.map((row, i) => (
-                    <tr key={i} className="border-t border-gray-200">
-                      <td className="p-2">{row.Country}</td>
-                      <td className="p-2">{row.EdLevel}</td>
-                      <td className="p-2">{row.YearsCodePro}</td>
-                      <td className="p-2 font-mono">
-                        {typeof row.Predicted_Salary_USD === 'number'
-                          ? `$${row.Predicted_Salary_USD.toLocaleString()}`
-                          : '❌ Error'}
-                      </td>
-                      <td className="p-2 font-mono">
-                        {typeof row.Converted_Salary === 'number'
-                          ? `${row.Converted_Salary.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
-                          : '—'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
           </div>
-        </>
+
+          {/* Converted Results Table */}
+          {convertedResults && (
+            <div className="bg-white rounded-2xl shadow-md border border-slate-100 p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7C5 4 4 5 4 7z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v8m-4-4h8" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 className="text-lg font-bold text-slate-800">Converted Salaries ({targetCurrency})</h4>
+                  <p className="text-sm text-slate-500">Original USD predictions converted to {targetCurrency}</p>
+                </div>
+              </div>
+              <div className="overflow-auto max-h-96 border border-slate-200 rounded-xl">
+                <table className="min-w-full text-sm text-slate-700">
+                  <thead className="bg-slate-50 sticky top-0">
+                    <tr>
+                      <th className="p-3 text-left font-semibold">Country</th>
+                      <th className="p-3 text-left font-semibold">Education</th>
+                      <th className="p-3 text-left font-semibold">Experience</th>
+                      <th className="p-3 text-left font-semibold">Original (USD)</th>
+                      <th className="p-3 text-left font-semibold">Converted ({targetCurrency})</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {convertedResults.map((row, i) => (
+                      <tr key={i} className="border-t border-slate-100 hover:bg-slate-50">
+                        <td className="p-3">{row.Country}</td>
+                        <td className="p-3">{row.EdLevel}</td>
+                        <td className="p-3">{row.YearsCodePro}</td>
+                        <td className="p-3 font-mono">
+                          {typeof row.Predicted_Salary_USD === 'number'
+                            ? `$${row.Predicted_Salary_USD.toLocaleString()}`
+                            : '❌ Error'}
+                        </td>
+                        <td className="p-3 font-mono">
+                          {typeof row.Converted_Salary === 'number'
+                            ? `${row.Converted_Salary.toLocaleString(undefined, { maximumFractionDigits: 2 })} ${targetCurrency}`
+                            : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

@@ -76,14 +76,40 @@ async def get_analytics():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-    # Mean salary by country
+    return build_analytics_payload(df)
+
+
+def build_analytics_payload(df):
+    summary_stats = {
+        "average_salary": round(df['Salary'].mean(), 2) if not df.empty else 0,
+        "highest_salary": round(df['Salary'].max(), 2) if not df.empty else 0,
+        "lowest_salary": round(df['Salary'].min(), 2) if not df.empty else 0,
+        "total_records": int(len(df)),
+    }
+
     country_salary = df.groupby("Country")["Salary"].mean().sort_values().reset_index()
     mean_by_country = [
         {"category": row['Country'], "mean_salary": round(row['Salary'], 2)}
         for _, row in country_salary.iterrows()
     ]
 
-    # Mean salary by experience (grouped in 5‑year bins)
+    country_distribution = [
+        {"category": row['Country'], "count": int(row['count'])}
+        for _, row in df.groupby("Country")["Salary"].count().reset_index(name='count').sort_values('count', ascending=False).iterrows()
+    ]
+
+    experience_points = (
+        df.groupby(df['YearsCodePro'].round().astype(int))["Salary"]
+          .mean()
+          .reset_index()
+          .sort_values('YearsCodePro')
+          .rename(columns={"YearsCodePro": "experience", "Salary": "mean_salary"})
+    )
+    experience_salary_points = [
+        {"experience": int(row['experience']), "mean_salary": round(row['mean_salary'], 2)}
+        for _, row in experience_points.iterrows()
+    ]
+
     exp_bins = range(0, 51, 5)
     df['ExpGroup'] = pd.cut(df['YearsCodePro'], bins=exp_bins, right=False)
     exp_salary = df.groupby("ExpGroup")["Salary"].mean().reset_index()
@@ -98,22 +124,40 @@ async def get_analytics():
             "mean_salary": round(row[1]['Salary'], 2)
         })
 
-    # Salary distribution (histogram)
     hist, bins = np.histogram(df['Salary'], bins=20)
     salary_distribution = [
         {"bin": f"{int(bins[i])}-{int(bins[i+1])}", "count": int(hist[i])}
         for i in range(len(hist))
     ]
 
-    # Education level vs salary summary
-    edu_salary = df.groupby("EdLevel")["Salary"].agg(['mean', 'median', 'std']).reset_index()
+    edu_salary = df.groupby("EdLevel")["Salary"].agg(['mean', 'median', 'std', 'count']).reset_index()
     education_salary_comparison = edu_salary.to_dict(orient='records')
+    education_salary_distribution = [
+        {"category": row['EdLevel'], "mean_salary": round(row['mean'], 2), "count": int(row['count'])}
+        for _, row in edu_salary.iterrows()
+    ]
+
+    edu_country_salary = (
+        df.groupby(["Country", "EdLevel"])["Salary"]
+          .mean()
+          .reset_index()
+          .rename(columns={"Salary": "mean_salary"})
+    )
+    education_salary_by_country = [
+        {"country": row['Country'], "education": row['EdLevel'], "mean_salary": round(row['mean_salary'], 2)}
+        for _, row in edu_country_salary.iterrows()
+    ]
 
     return {
+        "summary_stats": summary_stats,
         "mean_salary_by_country": mean_by_country,
         "mean_salary_by_experience": mean_by_experience,
+        "experience_salary_points": experience_salary_points,
         "salary_distribution": salary_distribution,
-        "education_salary_comparison": education_salary_comparison
+        "education_salary_comparison": education_salary_comparison,
+        "education_salary_distribution": education_salary_distribution,
+        "country_distribution": country_distribution,
+        "education_salary_by_country": education_salary_by_country,
     }
 
 class FilterRequest(BaseModel):
@@ -134,47 +178,16 @@ async def get_filtered_analytics(payload: FilterRequest):
         df = df[df['Country'].isin(selected)]
 
     if df.empty:
-        # Return empty structures if no data matches
         return {
+            "summary_stats": {"average_salary": 0, "highest_salary": 0, "lowest_salary": 0, "total_records": 0},
             "mean_salary_by_country": [],
             "mean_salary_by_experience": [],
+            "experience_salary_points": [],
             "salary_distribution": [],
-            "education_salary_comparison": []
+            "education_salary_comparison": [],
+            "education_salary_distribution": [],
+            "country_distribution": [],
+            "education_salary_by_country": [],
         }
 
-    # Same calculations as above, but on filtered DataFrame
-    country_salary = df.groupby("Country")["Salary"].mean().sort_values().reset_index()
-    mean_by_country = [
-        {"category": row['Country'], "mean_salary": round(row['Salary'], 2)}
-        for _, row in country_salary.iterrows()
-    ]
-
-    exp_bins = range(0, 51, 5)
-    df['ExpGroup'] = pd.cut(df['YearsCodePro'], bins=exp_bins, right=False)
-    exp_salary = df.groupby("ExpGroup")["Salary"].mean().reset_index()
-    mean_by_experience = []
-    for interval, row in zip(exp_salary['ExpGroup'], exp_salary.iterrows()):
-        if pd.isna(interval):
-            continue
-        left = int(interval.left)
-        right = int(interval.right)
-        mean_by_experience.append({
-            "category": f"{left}-{right}",
-            "mean_salary": round(row[1]['Salary'], 2)
-        })
-
-    hist, bins = np.histogram(df['Salary'], bins=20)
-    salary_distribution = [
-        {"bin": f"{int(bins[i])}-{int(bins[i+1])}", "count": int(hist[i])}
-        for i in range(len(hist))
-    ]
-
-    edu_salary = df.groupby("EdLevel")["Salary"].agg(['mean', 'median', 'std']).reset_index()
-    education_salary_comparison = edu_salary.to_dict(orient='records')
-
-    return {
-        "mean_salary_by_country": mean_by_country,
-        "mean_salary_by_experience": mean_by_experience,
-        "salary_distribution": salary_distribution,
-        "education_salary_comparison": education_salary_comparison
-    }
+    return build_analytics_payload(df)
